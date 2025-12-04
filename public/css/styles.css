@@ -1,0 +1,11 @@
+body {
+  background-color: #ede5db;
+}
+
+.container {
+  margin-top: 20px;
+}
+
+.navbar-brand {
+  font-weight: bold;
+}
