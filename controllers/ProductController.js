@@ -138,7 +138,7 @@ const ProductController = {
         } else {
             // Store all required info
             req.session.cart.push({
-                id: product.productId,      
+                id: product.id,      
                 productName: product.productName,
                 price: parseFloat(product.price),
                 quantity: quantity,

@@ -2,7 +2,8 @@ const connection = require('../db');
 
 module.exports = {
     register: (req, res) => {
-        const { username, email, password, address, contact, role } = req.body;
+        const { username, email, password, address, contact} = req.body;
+        const role = 'user';
 
         const sql = 'INSERT INTO users (username, email, password, address, contact, role) VALUES (?, ?, SHA1(?), ?, ?, ?)';
         connection.query(sql, [username, email, password, address, contact, role], (err, result) => {

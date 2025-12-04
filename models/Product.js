@@ -1,31 +1,20 @@
 const db = require('../db');
 
 const Product = {
-    // Get all products
+
     getAllProducts: (callback) => {
         const sql = 'SELECT * FROM products';
-        db.query(sql, (err, result) => {
-            if (err) {
-                callback(err, null);
-                return;
-            }
-            callback(null, result);
-        });
+        db.query(sql, callback);
     },
 
-    // Get product by ID
     getProductById: (productId, callback) => {
         const sql = 'SELECT * FROM products WHERE id = ?';
         db.query(sql, [productId], (err, result) => {
-            if (err) {
-                callback(err, null);
-                return;
-            }
+            if (err) return callback(err, null);
             callback(null, result[0]);
         });
     },
 
-    // Add new product
     addProduct: (productData, callback) => {
         const sql = 'INSERT INTO products (productName, price, quantity, image) VALUES (?, ?, ?, ?)';
         db.query(sql, [
@@ -33,56 +22,54 @@ const Product = {
             productData.price,
             productData.quantity,
             productData.image
-        ], (err, result) => {
-            if (err) {
-                callback(err, null);
-                return;
-            }
-            callback(null, result.insertId);
-        });
+        ], callback);
     },
 
-    // Update product
     updateProduct: (productId, productData, callback) => {
-        const sql = 'UPDATE products SET productName = ?, price = ?, quantity = ?, image = ? WHERE id = ?';
+        const sql = 'UPDATE products SET productName=?, price=?, quantity=?, image=? WHERE id=?';
         db.query(sql, [
             productData.productName,
             productData.price,
             productData.quantity,
             productData.image,
             productId
-        ], (err, result) => {
-            if (err) {
-                callback(err, null);
-                return;
-            }
-            callback(null, result.affectedRows > 0);
-        });
+        ], callback);
     },
 
-    // Delete product
     deleteProduct: (productId, callback) => {
-        const sql = 'DELETE FROM products WHERE id = ?';
-        db.query(sql, [productId], (err, result) => {
-            if (err) {
-                callback(err, null);
-                return;
-            }
-            callback(null, result.affectedRows > 0);
-        });
+        const sql = 'DELETE FROM products WHERE id=?';
+        db.query(sql, [productId], callback);
     },
 
-    // Update product quantity
     updateQuantity: (productId, quantity, callback) => {
-        const sql = 'UPDATE products SET quantity = quantity + ? WHERE id = ?';
-        db.query(sql, [quantity, productId], (err, result) => {
-            if (err) {
-                callback(err, null);
-                return;
-            }
-            callback(null, result.affectedRows > 0);
-        });
+        const sql = 'UPDATE products SET quantity = quantity + ? WHERE id=?';
+        db.query(sql, [quantity, productId], callback);
+    },
+
+    // -----------------------
+    // Search Feature (NEW)
+    // -----------------------
+    searchProducts: (keyword, callback) => {
+        let sql = "SELECT * FROM products";
+        let params = [];
+
+        if (keyword && keyword.trim() !== "") {
+            sql += " WHERE productName LIKE ?";
+            params.push("%" + keyword + "%");
+        }
+
+        db.query(sql, params, callback);
     }
 };
+// Reduce stock safely
+Product.reduceStock = (productId, qtyPurchased, callback) => {
+    const sql = `
+        UPDATE products 
+        SET quantity = quantity - ? 
+        WHERE id = ? AND quantity >= ?
+    `;
+    db.query(sql, [qtyPurchased, productId, qtyPurchased], callback);
+};
+
 
 module.exports = Product;
