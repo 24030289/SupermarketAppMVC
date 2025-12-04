@@ -90,21 +90,38 @@ app.post('/updateProduct/:id', checkAuthenticated, checkAdmin, upload.single('im
 app.get('/deleteProduct/:id', checkAuthenticated, checkAdmin, ProductController.deleteProduct);
 
 
-// Shopping (Customer) + Search Feature
+// Shopping page with Search + Sort
 app.get('/shopping', checkAuthenticated, (req, res) => {
     const search = req.query.search || "";
+    const sort = req.query.sort || "";
 
     Product.searchProducts(search, (err, products) => {
         if (err) return res.status(500).send("Error retrieving products");
 
+        // Apply sorting
+        switch (sort) {
+            case "price_asc":
+                products.sort((a, b) => a.price - b.price);
+                break;
+            case "price_desc":
+                products.sort((a, b) => b.price - a.price);
+                break;
+            case "name_asc":
+                products.sort((a, b) => a.productName.localeCompare(b.productName));
+                break;
+            case "name_desc":
+                products.sort((a, b) => b.productName.localeCompare(a.productName));
+                break;
+        }
+
         res.render('shopping', {
             products,
             user: req.session.user,
-            search
+            search,
+            sort
         });
     });
 });
-
 
 // Cart
 app.post('/add-to-cart/:id', checkAuthenticated, (req, res) => {

@@ -136,7 +136,6 @@ const ProductController = {
         if (existing) {
             existing.quantity += quantity;
         } else {
-            // Store all required info
             req.session.cart.push({
                 id: product.id,      
                 productName: product.productName,

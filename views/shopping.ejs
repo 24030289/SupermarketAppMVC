@@ -16,17 +16,42 @@
 
   <h3>Welcome, <%= user.username %>!</h3>
 
-  <!-- Search Form -->
-  <form method="GET" action="/shopping" class="d-flex mb-3">
+  <!-- 🔍 Search + Sort Section -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+
+    <!-- Search -->
+    <form method="GET" action="/shopping" class="d-flex gap-2">
       <input 
         type="text" 
         name="search" 
-        class="form-control me-2" 
+        class="form-control"
         placeholder="Search products..."
         value="<%= search %>"
       >
       <button class="btn btn-primary">Search</button>
-  </form>
+    </form>
+
+    <!-- Sort -->
+    <form method="GET" action="/shopping">
+      <input type="hidden" name="search" value="<%= search %>">
+      <select name="sort" class="form-select" onchange="this.form.submit()">
+        <option value="">Sort By</option>
+        <option value="price_asc" <%= sort === "price_asc" ? "selected" : "" %>>
+          Price: Low → High
+        </option>
+        <option value="price_desc" <%= sort === "price_desc" ? "selected" : "" %>>
+          Price: High → Low
+        </option>
+        <option value="name_asc" <%= sort === "name_asc" ? "selected" : "" %>>
+          Name: A → Z
+        </option>
+        <option value="name_desc" <%= sort === "name_desc" ? "selected" : "" %>>
+          Name: Z → A
+        </option>
+      </select>
+    </form>
+
+  </div>
 
   <h2 class="text-center">Products</h2>
 
@@ -47,9 +72,7 @@
         <tr>
           <td><a href="/product/<%= p.id %>"><%= p.productName %></a></td>
 
-          <td>
-            <img src="/images/<%= p.image %>" width="80">
-          </td>
+          <td><img src="/images/<%= p.image %>" width="80"></td>
 
           <td>
             <%= p.quantity %>
@@ -77,9 +100,7 @@
           <td>
             <form action="/add-to-cart/<%= p.id %>" method="POST">
               <input type="hidden" id="qty-<%= p.id %>" name="quantity" value="1">
-
-              <button class="btn btn-primary mt-1"
-                <%= p.quantity === 0 ? "disabled" : "" %>>
+              <button class="btn btn-primary mt-1" <%= p.quantity === 0 ? "disabled" : "" %>>
                 Buy
               </button>
             </form>
