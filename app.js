@@ -12,18 +12,15 @@ const CheckoutController = require('./controllers/CheckoutController');
 // Models
 const Product = require('./models/Product');
 
-// ----------------------
 // File uploads (multer)
-// ----------------------
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'public/images'),
     filename: (req, file, cb) => cb(null, file.originalname)
 });
 const upload = multer({ storage });
 
-// ----------------------
 // View Engine & Middleware
-// ----------------------
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
@@ -35,9 +32,8 @@ app.use(session({
 }));
 app.use(flash());
 
-// ----------------------
 // Auth Middlewares
-// ----------------------
+
 const checkAuthenticated = (req, res, next) => {
     if (req.session.user) return next();
     req.flash('error', 'Please log in to view this resource');
@@ -50,9 +46,8 @@ const checkAdmin = (req, res, next) => {
     res.redirect('/shopping');
 };
 
-// ----------------------
 // Registration Validation
-// ----------------------
+
 const validateRegistration = (req, res, next) => {
     const { username, email, password, address, contact, role } = req.body;
     const errors = [];
@@ -78,9 +73,7 @@ const validateRegistration = (req, res, next) => {
     next();
 };
 
-// ----------------------
 // Routes
-// ----------------------
 
 // Home
 app.get('/', (req, res) => {
@@ -96,16 +89,14 @@ app.get('/updateProduct/:id', checkAuthenticated, checkAdmin, ProductController.
 app.post('/updateProduct/:id', checkAuthenticated, checkAdmin, upload.single('image'), ProductController.updateProduct);
 app.get('/deleteProduct/:id', checkAuthenticated, checkAdmin, ProductController.deleteProduct);
 
-// ----------------------
+
 // Shopping (Customer) + Search Feature
-// ----------------------
 app.get('/shopping', checkAuthenticated, (req, res) => {
     const search = req.query.search || "";
 
     Product.searchProducts(search, (err, products) => {
         if (err) return res.status(500).send("Error retrieving products");
 
-        // Customers only — admins redirected automatically
         res.render('shopping', {
             products,
             user: req.session.user,
@@ -114,9 +105,8 @@ app.get('/shopping', checkAuthenticated, (req, res) => {
     });
 });
 
-// ----------------------
+
 // Cart
-// ----------------------
 app.post('/add-to-cart/:id', checkAuthenticated, (req, res) => {
     const productId = parseInt(req.params.id);
     const quantity = parseInt(req.body.quantity) || 1;
@@ -158,11 +148,12 @@ app.get('/cart/clear', checkAuthenticated, (req, res) => {
     res.redirect('/cart');
 });
 
-// ----------------------
 // Checkout
-// ----------------------
 app.get('/checkout', checkAuthenticated, CheckoutController.showCheckout);
 app.post('/checkout', checkAuthenticated, CheckoutController.completeCheckout);
+
+// Success Page
+app.get('/checkout/success', checkAuthenticated, CheckoutController.successPage);
 
 // Purchase History
 app.get('/mypurchases', checkAuthenticated, CheckoutController.showPurchaseHistory);
@@ -170,9 +161,7 @@ app.get('/mypurchases', checkAuthenticated, CheckoutController.showPurchaseHisto
 // Invoice
 app.get('/invoice/:id', checkAuthenticated, CheckoutController.showInvoice);
 
-// ----------------------
 // Authentication
-// ----------------------
 app.get('/register', (req, res) => {
     res.render('register', {
         messages: req.flash('error'),
@@ -196,8 +185,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-// ----------------------
 // Server
-// ----------------------
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -8,6 +8,7 @@ exports.showCheckout = (req, res) => {
     res.render('checkout', { cart, user: req.session.user });
 };
 
+// Complete Checkout → Create Order → Show Success Page
 exports.completeCheckout = (req, res) => {
     const userId = req.session.user.id;
     const cart = req.session.cart;
@@ -20,40 +21,53 @@ exports.completeCheckout = (req, res) => {
 
     Order.createOrder(userId, total, (err, result) => {
         if (err) {
-            console.error(err);
+            console.error("Order creation error:", err);
             return res.send("Order failed");
         }
 
         const orderId = result.insertId;
 
-        // Insert + reduce stock
+        // Insert each cart item + Reduce stock
         cart.forEach(item => {
-
-            // 1. Add order item
             OrderItem.addItemToOrder(
                 orderId,
                 item.id,
                 item.quantity,
                 item.price,
                 err => {
-                    if (err) console.error("Item insert error:", err);
+                    if (err) console.error("Order item insert error:", err);
                 }
             );
 
-            // 2. Reduce product stock
             Product.reduceStock(item.id, item.quantity, err => {
                 if (err) console.error("Stock update error:", err);
             });
         });
 
-        // 3. Clear cart
+        // Save last order for success screen
+        req.session.lastOrderId = orderId;
+
+        // Clear cart after order
         req.session.cart = [];
 
-        // 4. Redirect to invoice
-        res.redirect(`/invoice/${orderId}`);
+        // Redirect to success confirmation
+        res.redirect('/checkout/success');
     });
 };
 
+// Success Page View
+exports.successPage = (req, res) => {
+    const orderId = req.session.lastOrderId;
+
+    if (!orderId) {
+        return res.redirect('/shopping'); 
+    }
+
+    res.render('success', {
+        user: req.session.user,
+        orderId
+    });
+};
 
 // Purchase history
 exports.showPurchaseHistory = (req, res) => {
@@ -76,7 +90,11 @@ exports.showInvoice = (req, res) => {
         OrderItem.getItemsByOrder(orderId, (err, items) => {
             if (err) return res.send("Error loading invoice items");
 
-            res.render('invoice', { order: order[0], items, user: req.session.user });
+            res.render('invoice', {
+                order: order[0],
+                items,
+                user: req.session.user
+            });
         });
     });
 };
