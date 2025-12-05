@@ -52,6 +52,7 @@
 <% if (user && user.role === 'user') { %>
   <a href="/mypurchases" class="btn btn-secondary">Back to Purchases</a>
   <a href="/shopping" class="btn btn-primary">Continue Shopping</a>
+  <a href="/invoice/<%= order.id %>/pdf" class="btn btn-warning">Download as PDF</a>
 <% } else if (user && user.role === 'admin') { %>
   <a href="/admin/orders" class="btn btn-dark">Back to Orders</a>
 <% } %>

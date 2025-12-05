@@ -180,6 +180,8 @@ app.get('/admin/orders', checkAuthenticated, checkAdmin, CheckoutController.show
 
 // Invoice
 app.get('/invoice/:id', checkAuthenticated, CheckoutController.showInvoice);
+app.get('/invoice/:id/pdf', checkAuthenticated, CheckoutController.downloadInvoicePDF);
+
 
 // Authentication
 app.get('/register', (req, res) => {

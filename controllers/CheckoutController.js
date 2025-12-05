@@ -107,3 +107,121 @@ exports.showAllOrders = (req, res) => {
         res.render('adminOrders', { orders, user: req.session.user });
     });
 };
+
+// Download invoice as PDF
+exports.downloadInvoicePDF = (req, res) => {
+    const orderId = req.params.id;
+
+    Order.getOrderById(orderId, (err, order) => {
+        if (err || !order || order.length === 0) {
+            return res.send("Invoice not found");
+        }
+
+        OrderItem.getItemsByOrder(orderId, (err, items) => {
+            if (err) return res.send("Invoice items error");
+
+            const PDFDocument = require('pdfkit');
+            const doc = new PDFDocument({ margin: 50 });
+
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename=Invoice_${orderId}.pdf`
+            );
+
+            doc.pipe(res);
+
+            // Header
+            doc
+                .fontSize(20)
+                .font("Helvetica-Bold")
+                .text("SUPERMARKET APP", { align: "center" });
+
+            doc
+                .fontSize(14)
+                .font("Helvetica")
+                .text("Invoice", { align: "center" });
+
+            doc.moveDown(2);
+
+            // Order Info
+            const invoice = order[0];
+            doc.fontSize(12).font("Helvetica-Bold").text("Order Details");
+            doc.moveDown(0.3);
+            doc.font("Helvetica")
+                .text(`Order ID: ${invoice.id}`)
+                .text(`Date: ${new Date(invoice.createdAt).toLocaleString()}`)
+                .text(`Customer ID: ${invoice.userId}`);
+
+            doc.moveDown();
+
+            // Table Header
+            const tableTop = doc.y + 10;
+            const columnPositions = {
+                product: 50,
+                qty: 280,
+                price: 340,
+                subtotal: 420,
+            };
+
+            doc
+                .fontSize(12)
+                .font("Helvetica-Bold")
+                .text("Product", columnPositions.product, tableTop)
+                .text("Qty", columnPositions.qty, tableTop)
+                .text("Price", columnPositions.price, tableTop)
+                .text("Subtotal", columnPositions.subtotal, tableTop);
+
+            doc.moveDown(0.5);
+            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+            doc.moveDown(0.8);
+
+            // Items Table
+            doc.font("Helvetica");
+            let totalAmount = 0;
+            let rowTop = doc.y;
+
+            items.forEach(item => {
+                const price = Number(item.price);
+                const subtotal = price * item.quantity;
+                totalAmount += subtotal;
+
+                doc.text(item.productName, columnPositions.product, rowTop);
+                doc.text(item.quantity.toString(), columnPositions.qty, rowTop);
+                doc.text(`$${price.toFixed(2)}`, columnPositions.price, rowTop);
+                doc.text(`$${subtotal.toFixed(2)}`, columnPositions.subtotal, rowTop);
+
+                rowTop += 22;
+            });
+
+            doc.moveTo(50, rowTop).lineTo(550, rowTop).stroke();
+            doc.moveDown(1.5);
+
+            // Total
+            doc
+                .font("Helvetica-Bold")
+                .fontSize(14)
+                .text(`Total: $${totalAmount.toFixed(2)}`, {
+                    align: "right"
+                });
+
+            doc.moveDown(3);
+
+            //Center Footer 
+            const footerText = "Thank you for shopping with Supermarket App!";
+            const pageWidth = doc.page.width;
+            const textWidth = doc.widthOfString(footerText);
+
+            doc
+                .font("Helvetica")
+                .fontSize(11)
+                .text(
+                    footerText,
+                    (pageWidth - textWidth) / 2, 
+                    doc.y // 
+                );
+
+            doc.end();
+        });
+    });
+};
