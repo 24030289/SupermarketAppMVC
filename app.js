@@ -174,6 +174,9 @@ app.get('/checkout/success', checkAuthenticated, CheckoutController.successPage)
 
 // Purchase History
 app.get('/mypurchases', checkAuthenticated, CheckoutController.showPurchaseHistory);
+// Admin view all orders
+app.get('/admin/orders', checkAuthenticated, checkAdmin, CheckoutController.showAllOrders);
+
 
 // Invoice
 app.get('/invoice/:id', checkAuthenticated, CheckoutController.showInvoice);

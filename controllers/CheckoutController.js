@@ -34,6 +34,8 @@ exports.completeCheckout = (req, res) => {
                 item.id,
                 item.quantity,
                 item.price,
+                item.productName,
+                item.image,
                 err => {
                     if (err) console.error("Order item insert error:", err);
                 }
@@ -96,5 +98,12 @@ exports.showInvoice = (req, res) => {
                 user: req.session.user
             });
         });
+    });
+};
+
+exports.showAllOrders = (req, res) => {
+    Order.getAllOrders((err, orders) => {
+        if (err) return res.send("Error retrieving all orders");
+        res.render('adminOrders', { orders, user: req.session.user });
     });
 };

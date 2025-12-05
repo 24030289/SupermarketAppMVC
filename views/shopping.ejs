@@ -4,113 +4,128 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <title>Supermarket App</title>
+
+<style>
+  body {
+      background-color: #EAE2D6;
+  }
+
+  .product-card {
+      width: 260px;
+      margin: auto;
+      border-radius: 12px;
+  }
+
+  .product-img {
+      height: 150px;
+      object-fit: contain;
+      padding: 10px 10px 0 10px;
+  }
+
+  .qty-select {
+      width: 70px;
+      margin: auto;
+      text-align: center;
+  }
+
+  .add-btn {
+      background-color: #007bff;
+      border-radius: 8px;
+  }
+</style>
+
 </head>
+
 <body>
 
 <%- include("partials/navbar", { user: user }) %>
 
 <div class="container mt-4">
 
-  <h3>Welcome, <%= user.username %>!</h3>
+  <h3 class="mb-3">Welcome, <%= user.username %>!</h3>
 
-  <!-- 🔍 Search + Sort Section -->
+  <!-- Search + Sort Row -->
   <div class="d-flex justify-content-between align-items-center mb-3">
 
-    <!-- Search -->
-    <form method="GET" action="/shopping" class="d-flex gap-2">
-      <input 
-        type="text" 
-        name="search" 
-        class="form-control"
-        placeholder="Search products..."
-        value="<%= search %>"
-      >
+    <!-- Search Form -->
+    <form method="GET" action="/shopping" class="d-flex">
+      <input type="text" 
+            name="search" 
+            class="form-control me-2" 
+            placeholder="Search products..."
+            value="<%= search %>">
       <button class="btn btn-primary">Search</button>
     </form>
 
-    <!-- Sort -->
+    <!-- Sort Dropdown -->
     <form method="GET" action="/shopping">
-      <input type="hidden" name="search" value="<%= search %>">
-      <select name="sort" class="form-select" onchange="this.form.submit()">
+      <select name="sort" class="form-select"
+        onchange="this.form.submit()">
         <option value="">Sort By</option>
-        <option value="price_asc" <%= sort === "price_asc" ? "selected" : "" %>>
-          Price: Low → High
-        </option>
-        <option value="price_desc" <%= sort === "price_desc" ? "selected" : "" %>>
-          Price: High → Low
-        </option>
-        <option value="name_asc" <%= sort === "name_asc" ? "selected" : "" %>>
-          Name: A → Z
-        </option>
-        <option value="name_desc" <%= sort === "name_desc" ? "selected" : "" %>>
-          Name: Z → A
-        </option>
+        <option value="name_asc" <%= sort==='name_asc'?'selected':'' %>>Name: A → Z</option>
+        <option value="name_desc" <%= sort==='name_desc'?'selected':'' %>>Name: Z → A</option>
+        <option value="price_asc" <%= sort==='price_asc'?'selected':'' %>>Price: Low → High</option>
+        <option value="price_desc" <%= sort==='price_desc'?'selected':'' %>>Price: High → Low</option>
       </select>
     </form>
 
   </div>
 
-  <h2 class="text-center">Products</h2>
+  <!-- Product Grid -->
+  <div class="row g-4 justify-content-center">
 
-  <table class="table table-hover small text-center mt-4">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Image</th>
-        <th>Stock</th>
-        <th>Price</th>
-        <th>Qty</th>
-        <th>Buy</th>
-      </tr>
-    </thead>
+    <% products.forEach(p => { %>
+    <div class="col-auto">
+      <div class="card product-card shadow-sm">
 
-    <tbody>
-      <% products.forEach(p => { %>
-        <tr>
-          <td><a href="/product/<%= p.id %>"><%= p.productName %></a></td>
+        <img src="/images/<%= p.image %>" class="card-img-top product-img">
 
-          <td><img src="/images/<%= p.image %>" width="80"></td>
+        <div class="card-body text-center">
 
-          <td>
-            <%= p.quantity %>
-            <% if (p.quantity === 0) { %>
-              <br><span class="text-danger small">Out of stock</span>
-            <% } %>
-          </td>
+          <h6 class="card-title fw-bold">
+            <a href="/product/<%= p.id %>" class="text-decoration-none text-dark">
+              <%= p.productName %>
+            </a>
+          </h6>
 
-          <td>$<%= p.price.toFixed(2) %></td>
+          <p class="fw-bold">$<%= p.price.toFixed(2) %></p>
 
-          <!-- QTY Dropdown -->
-          <td>
-            <select class="form-control"
+          <% if (p.quantity > 0) { %>
+            <span class="badge bg-success mb-2">
+              In Stock: <%= p.quantity %>
+            </span>
+          <% } else { %>
+            <span class="badge bg-danger mb-2">Out of Stock</span>
+          <% } %>
+
+          <form action="/add-to-cart/<%= p.id %>" method="POST" class="mt-2">
+
+            <select class="form-select qty-select mb-2"
                 onchange="document.getElementById('qty-<%= p.id %>').value = this.value"
-                <%= p.quantity === 0 ? 'disabled' : '' %>>
-                
-                <% let maxQty = Math.min(5, p.quantity); %>
-                <% for (let q = 1; q <= maxQty; q++) { %>
-                    <option value="<%= q %>"><%= q %></option>
-                <% } %>
+                <%= p.quantity === 0 ? "disabled" : "" %>>
+              <% let maxQty = Math.min(5, p.quantity); %>
+              <% for (let q = 1; q <= maxQty; q++) { %>
+                <option value="<%= q %>"><%= q %></option>
+              <% } %>
             </select>
-          </td>
 
-          <!-- BUY button -->
-          <td>
-            <form action="/add-to-cart/<%= p.id %>" method="POST">
-              <input type="hidden" id="qty-<%= p.id %>" name="quantity" value="1">
-              <button class="btn btn-primary mt-1" <%= p.quantity === 0 ? "disabled" : "" %>>
-                Buy
-              </button>
-            </form>
-          </td>
+            <input type="hidden" id="qty-<%= p.id %>" name="quantity" value="1">
 
-        </tr>
-      <% }) %>
-    </tbody>
+            <button class="btn btn-primary w-100 add-btn"
+              <%= p.quantity === 0 ? "disabled" : "" %>>
+              Add to Cart
+            </button>
 
-  </table>
+          </form>
+
+        </div>
+      </div>
+    </div>
+    <% }) %>
+
+  </div>
 
 </div>
 

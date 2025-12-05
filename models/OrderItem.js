@@ -1,18 +1,24 @@
-// models/OrderItem.js
 const db = require('../db');
 
-exports.addItemToOrder = (orderId, productId, quantity, price, callback) => {
-    const sql = "INSERT INTO order_items (orderId, productId, quantity, price) VALUES (?, ?, ?, ?)";
-    db.query(sql, [orderId, productId, quantity, price], callback);
+const OrderItem = {
+
+    addItemToOrder: (orderId, productId, quantity, price, productName, productImage, callback) => {
+        const sql = `
+            INSERT INTO order_items (orderId, productId, quantity, price, productName, productImage)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        db.query(sql, [orderId, productId, quantity, price, productName, productImage], callback);
+    },
+
+    getItemsByOrder: (orderId, callback) => {
+        const sql = `
+            SELECT productName, productImage, price, quantity
+            FROM order_items
+            WHERE orderId = ?
+        `;
+        db.query(sql, [orderId], callback);
+    }
+
 };
 
-// Get items for a single order
-exports.getItemsByOrder = (orderId, callback) => {
-    const sql = `
-        SELECT oi.*, p.productName, p.image
-        FROM order_items oi
-        JOIN products p ON oi.productId = p.id
-        WHERE oi.orderId = ?
-    `;
-    db.query(sql, [orderId], callback);
-};
+module.exports = OrderItem;

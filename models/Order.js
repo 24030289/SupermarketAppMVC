@@ -18,3 +18,16 @@ exports.getOrderById = (orderId, callback) => {
     const sql = "SELECT * FROM orders WHERE id = ?";
     db.query(sql, [orderId], callback);
 };
+
+// Get ALL orders (for admin)
+exports.getAllOrders = (callback) => {
+    const sql = `
+        SELECT o.*, 
+               COALESCE(u.username, 'Unknown User') AS username
+        FROM orders o
+        LEFT JOIN users u ON o.userId = u.id
+        ORDER BY o.createdAt DESC
+    `;
+    db.query(sql, callback);
+};
+

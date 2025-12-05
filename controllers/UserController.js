@@ -1,12 +1,17 @@
 const connection = require('../db'); 
 
 module.exports = {
+
     register: (req, res) => {
-        const { username, email, password, address, contact} = req.body;
+        const { username, email, password, address, contact } = req.body;
         const role = 'user';
 
-        const sql = 'INSERT INTO users (username, email, password, address, contact, role) VALUES (?, ?, SHA1(?), ?, ?, ?)';
-        connection.query(sql, [username, email, password, address, contact, role], (err, result) => {
+        const sql = `
+            INSERT INTO users (username, email, password, address, contact, role)
+            VALUES (?, ?, SHA1(?), ?, ?, ?)
+        `;
+
+        connection.query(sql, [username, email, password, address, contact, role], (err) => {
             if (err) {
                 console.error(err);
                 req.flash('error', 'Error during registration. Please try again.');
@@ -14,7 +19,7 @@ module.exports = {
             }
 
             req.flash('success', 'Registration successful! Please log in.');
-            res.redirect('/login');
+            return res.redirect('/login');
         });
     },
 
@@ -27,6 +32,7 @@ module.exports = {
         }
 
         const sql = 'SELECT * FROM users WHERE email = ? AND password = SHA1(?)';
+
         connection.query(sql, [email, password], (err, results) => {
             if (err) {
                 console.error(err);
@@ -34,14 +40,29 @@ module.exports = {
                 return res.redirect('/login');
             }
 
-            if (results.length > 0) {
-                req.session.user = results[0];
-                req.flash('success', 'Login successful!');
-                if (req.session.user.role === 'user') res.redirect('/shopping');
-                else res.redirect('/inventory');
-            } else {
+            if (results.length === 0) {
                 req.flash('error', 'Invalid email or password.');
-                res.redirect('/login');
+                return res.redirect('/login');
+            }
+
+            const user = results[0];
+
+            // Store user info in session
+            req.session.user = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                address: user.address,
+                contact: user.contact
+            };
+
+            req.flash('success', 'Login successful!');
+
+            if (user.role === 'admin') {
+                return res.redirect('/inventory'); 
+            } else {
+                return res.redirect('/shopping');
             }
         });
     }

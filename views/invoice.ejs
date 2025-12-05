@@ -31,7 +31,14 @@
       <% items.forEach(item => { %>
         <tr>
           <td><%= item.productName %></td>
-          <td><img src="/images/<%= item.image %>" width="80"></td>
+          <td>
+             <% if (item.productImage) { %>
+              <img src="/images/<%= item.productImage %>" width="80">
+            <% } else { %>
+            <span class="text-muted">No image</span>
+         <% } %>
+          </td>
+
           <td><%= item.quantity %></td>
           <td>$<%= item.price %></td>
           <td>$<%= (item.price * item.quantity).toFixed(2) %></td>
@@ -40,8 +47,15 @@
     </tbody>
   </table>
 
+
+  <!-- Show buttons only for normal users -->
+<% if (user && user.role === 'user') { %>
   <a href="/mypurchases" class="btn btn-secondary">Back to Purchases</a>
   <a href="/shopping" class="btn btn-primary">Continue Shopping</a>
+<% } else if (user && user.role === 'admin') { %>
+  <a href="/admin/orders" class="btn btn-dark">Back to Orders</a>
+<% } %>
+
 
 </div>
 
