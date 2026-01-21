@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+</head>
+
+<body>
+    <h1>Scan the QR Code</h1>
+    <p id="status">Scan with your bank simulator app to complete payment</p>
+
+    <img src="<%= qrCodeUrl %>" alt="QR Code" />
+
+    <p id="timer">Time remaining: 5:00</p>
+
+    <img width="40%" src="/images/netsQrInfo.png" /><br /><br />
+    <a href="/cart">Cancel</a>
+
+    <script>
+        // =========================
+        // NETS SSE LISTENER
+        // =========================
+        const txnRetrievalRef = "<%= txnRetrievalRef %>";
+
+        const s2sNetsTxnStatus = new EventSource(
+            `/sse/payment-status/${txnRetrievalRef}`
+        );
+
+        s2sNetsTxnStatus.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            console.log("NETS payment status:", data);
+
+            if (data.success) {
+                s2sNetsTxnStatus.close();
+                window.location.href =
+                    `/checkout/finalize?method=nets&txnRetrievalRef=${txnRetrievalRef}`;
+            }
+
+            if (data.fail) {
+                s2sNetsTxnStatus.close();
+                window.location.href =
+                    `/nets-qr/fail?txnRetrievalRef=${txnRetrievalRef}`;
+            }
+        };
+
+        s2sNetsTxnStatus.onerror = function () {
+            console.error("SSE connection error");
+        };
+
+        // =========================
+        // COUNTDOWN TIMER
+        // =========================
+        const timerElement = document.getElementById("timer");
+        let remainingTime = 300; // 5 minutes
+
+        const updateTimer = () => {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+
+            timerElement.textContent =
+                `Time remaining: ${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+            remainingTime--;
+
+            if (remainingTime < 0) {
+                clearInterval(timerInterval);
+                s2sNetsTxnStatus.close();
+                window.location.href =
+                    `/nets-qr/fail?txnRetrievalRef=${txnRetrievalRef}`;
+            }
+        };
+
+        const timerInterval = setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
+</body>
+</html>

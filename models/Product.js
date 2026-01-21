@@ -46,9 +46,8 @@ const Product = {
         db.query(sql, [quantity, productId], callback);
     },
 
-    // -----------------------
-    // Search Feature (NEW)
-    // -----------------------
+
+    // Search Feature
     searchProducts: (keyword, callback) => {
         let sql = "SELECT * FROM products";
         let params = [];
@@ -70,6 +69,5 @@ Product.reduceStock = (productId, qtyPurchased, callback) => {
     `;
     db.query(sql, [qtyPurchased, productId, qtyPurchased], callback);
 };
-
 
 module.exports = Product;
